@@ -79,6 +79,15 @@ async function readShared() {
   return Boolean(textRes || imgRes);
 }
 
+// Shared content waits in the cache until settings exist, so a share made before setup is not lost.
+async function handleShared() {
+  try {
+    if (await readShared()) writeEmail();
+  } catch (err) {
+    setStatus('Could not load the shared screenshot: ' + err.message, true);
+  }
+}
+
 // ---------- Draft ----------
 async function writeEmail() {
   const text = $('postText').value.trim();
@@ -173,7 +182,7 @@ $('saveSettings').onclick = async () => {
   if (!token) { setStatus('Enter your access token.', true); return; }
   saveSettings({ url, token });
   setStatus('Checking connection…');
-  try { await loadCvs(); setStatus(''); show('input'); }
+  try { await loadCvs(); setStatus(''); show('input'); await handleShared(); }
   catch (err) { setStatus(err.message, true); }
 };
 $('imageInput').onchange = async (e) => { if (e.target.files[0]) await setImage(e.target.files[0]); };
@@ -191,6 +200,5 @@ $('doneBtn').onclick = resetAll;
   const s = getSettings();
   if (!s.url || !s.token) { $('openSettings').click(); return; }
   show('input');
-  const shared = new URLSearchParams(location.search).has('shared') && (await readShared());
-  if (shared) writeEmail();
+  await handleShared();
 })();
