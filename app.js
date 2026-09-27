@@ -1,3 +1,4 @@
+const VERSION = 'v4';
 const $ = (id) => document.getElementById(id);
 const state = { image: null, imageType: 'image/jpeg', cvs: [], lastDraft: null };
 
@@ -197,6 +198,7 @@ $('startOver').onclick = resetAll;
 $('doneBtn').onclick = resetAll;
 
 (async function init() {
+  $('version').textContent = 'Job Mailer ' + VERSION;
   if ('serviceWorker' in navigator) {
     try { await navigator.serviceWorker.register('sw.js'); } catch {}
   }

@@ -1,9 +1,9 @@
-const SHELL = 'job-mailer-shell-v3';
+const SHELL = 'job-mailer-shell-v4';
 const SHARED = 'job-mailer-shared';
 const FILES = ['./', './index.html', './app.js', './manifest.json', './icons/icon-192.png', './icons/icon-512.png'];
 
 self.addEventListener('install', (e) => {
-  e.waitUntil(caches.open(SHELL).then((c) => c.addAll(FILES)));
+  e.waitUntil(caches.open(SHELL).then((c) => c.addAll(FILES.map((f) => new Request(f, { cache: 'reload' })))));
   self.skipWaiting();
 });
 
@@ -42,10 +42,11 @@ self.addEventListener('fetch', (e) => {
     return;
   }
 
-  // App files: network first so updates show up, cache as offline fallback.
+  // App files: network first (revalidating past the browser's HTTP cache) so updates show up,
+  // cache as offline fallback.
   if (e.request.method === 'GET' && url.origin === self.location.origin) {
     e.respondWith(
-      fetch(e.request)
+      fetch(e.request, { cache: 'no-cache' })
         .then((res) => {
           const copy = res.clone();
           caches.open(SHELL).then((c) => c.put(e.request, copy));
