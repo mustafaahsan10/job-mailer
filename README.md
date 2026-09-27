@@ -43,10 +43,36 @@ Google Apps Script web app  (runs as you)
 - **Picks the best CV** when you keep more than one (for example "AI / ML" and "General").
 - **Warnings** for posts that look like scams, ask for things the email doesn't cover (salary,
   notice period), or where you have already emailed that address.
-- **Duplicate check** before sending to an address you have emailed before.
+- **HR history log**: every sent email is recorded in your Google Sheet (see below), and you are
+  asked to confirm before emailing the same HR address again.
 - **Resilient AI calls:** retries with backoff, then falls back to Gemini Flash-Lite when Flash is busy.
 - **Private by design:** the public site holds no secrets. Your backend URL and access token live
   only on your phone, and API keys live in Apps Script properties.
+
+## HR history: every contact logged
+
+Each email you send adds a row to an **Applications** tab in your private Google Sheet. The backend
+creates the tab, with bold, frozen headers, the first time it runs. Over time you build a record of
+every recruiter and company you've contacted:
+
+| Column | What's stored |
+|---|---|
+| Date sent | when the email went out |
+| Company / Role | from the post (editable before sending) |
+| HR name / HR email | the recruiter you contacted |
+| Post | the job post text (first 5,000 characters) |
+| CV used | which CV was attached |
+| Subject / Email body | exactly what you sent |
+| Status | starts as `Sent`; update it yourself (Replied, Interview, Rejected…) |
+| Follow-up date | 7 days after sending, so you know when to chase |
+| Notes | free space for your own notes |
+
+The Sheet is also Job Mailer's memory. Before drafting and again before sending, it checks the HR
+email against the log. If you've already contacted that address, you get a warning with the date,
+and you have to confirm before it sends again, so the same recruiter doesn't get a second
+application by accident.
+
+The Sheet stays private in your Drive. Only the Apps Script running as you can read or write it.
 
 ## Project layout
 
@@ -70,7 +96,8 @@ You need a Google account and an Android phone with Chrome.
 1. Copy `profile-template.md`, fill it in with your real details, and upload it to Drive.
    Keep it factual, because the AI only claims what is written there.
 2. Upload your CV PDF(s).
-3. Create a blank Google Sheet for the log.
+3. Create a blank Google Sheet for your HR history log (any name works). The backend adds the
+   **Applications** tab and headers itself.
 4. Note the ID of each file: the long string between `/d/` and `/` in its link.
 
 ### 2. Gemini API key
