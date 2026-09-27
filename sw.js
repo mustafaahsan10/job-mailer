@@ -1,4 +1,4 @@
-const SHELL = 'job-mailer-shell-v4';
+const SHELL = 'job-mailer-shell-v5';
 const SHARED = 'job-mailer-shared';
 const FILES = ['./', './index.html', './app.js', './manifest.json', './icons/icon-192.png', './icons/icon-512.png'];
 

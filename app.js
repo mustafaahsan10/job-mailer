@@ -1,4 +1,4 @@
-const VERSION = 'v4';
+const VERSION = 'v5';
 const $ = (id) => document.getElementById(id);
 const state = { image: null, imageType: 'image/jpeg', cvs: [], lastDraft: null };
 
@@ -79,14 +79,22 @@ async function readShared() {
   if (imgRes) await setImage(await imgRes.blob());
   await Promise.all(['shared-text', 'shared-image', 'shared-info'].map((k) => cache.delete(k)));
   history.replaceState(null, '', location.pathname);
-  if (textRes && !text && !imgRes) throw new Error('the share arrived empty (' + info + ').');
+  if (textRes && !text && !imgRes) return 'empty';
   return Boolean(text || imgRes);
 }
 
 // Shared content waits in the cache until settings exist, so a share made before setup is not lost.
 async function handleShared() {
   try {
-    if (await readShared()) writeEmail();
+    const shared = await readShared();
+    if (shared === 'empty') {
+      // Chrome 153 on Android strips images shared from gallery apps, so the share arrives empty.
+      state.pickAfterEmptyShare = true;
+      setStatus('Android Chrome dropped the shared screenshot (a known Chrome bug). ' +
+        'Tap Choose file and pick it; the email will start writing right away.', true);
+    } else if (shared) {
+      writeEmail();
+    }
   } catch (err) {
     setStatus('Could not load the shared screenshot: ' + err.message, true);
   }
@@ -189,7 +197,11 @@ $('saveSettings').onclick = async () => {
   try { await loadCvs(); setStatus(''); show('input'); await handleShared(); }
   catch (err) { setStatus(err.message, true); }
 };
-$('imageInput').onchange = async (e) => { if (e.target.files[0]) await setImage(e.target.files[0]); };
+$('imageInput').onchange = async (e) => {
+  if (!e.target.files[0]) return;
+  await setImage(e.target.files[0]);
+  if (state.pickAfterEmptyShare) { state.pickAfterEmptyShare = false; writeEmail(); }
+};
 $('writeBtn').onclick = writeEmail;
 $('rewriteBtn').onclick = writeEmail;
 $('sendBtn').onclick = () => sendEmail(false);
