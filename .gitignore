@@ -1,0 +1,6 @@
+# Secrets and personal data: never commit
+.env
+profile.md
+
+.DS_Store
+.claude/
