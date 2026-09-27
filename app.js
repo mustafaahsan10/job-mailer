@@ -71,12 +71,15 @@ async function readShared() {
   const cache = await caches.open('job-mailer-shared');
   const textRes = await cache.match('shared-text');
   const imgRes = await cache.match('shared-image');
-  if (textRes) $('postText').value = await textRes.text();
+  const infoRes = await cache.match('shared-info');
+  const text = textRes ? await textRes.text() : '';
+  const info = infoRes ? await infoRes.text() : '';
+  if (text) $('postText').value = text;
   if (imgRes) await setImage(await imgRes.blob());
-  await cache.delete('shared-text');
-  await cache.delete('shared-image');
+  await Promise.all(['shared-text', 'shared-image', 'shared-info'].map((k) => cache.delete(k)));
   history.replaceState(null, '', location.pathname);
-  return Boolean(textRes || imgRes);
+  if (textRes && !text && !imgRes) throw new Error('the share arrived empty (' + info + ').');
+  return Boolean(text || imgRes);
 }
 
 // Shared content waits in the cache until settings exist, so a share made before setup is not lost.

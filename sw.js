@@ -1,4 +1,4 @@
-const SHELL = 'job-mailer-shell-v2';
+const SHELL = 'job-mailer-shell-v3';
 const SHARED = 'job-mailer-shared';
 const FILES = ['./', './index.html', './app.js', './manifest.json', './icons/icon-192.png', './icons/icon-512.png'];
 
@@ -23,8 +23,14 @@ self.addEventListener('fetch', (e) => {
     e.respondWith((async () => {
       const form = await e.request.formData();
       const text = ['title', 'text', 'url'].map((k) => form.get(k)).filter(Boolean).join('\n');
-      const image = form.get('image');
+      // Take the first non-empty file under any field name; some Android apps don't use ours.
+      const entries = [...form.entries()];
+      const image = entries.map(([, v]) => v).find((v) => typeof v !== 'string' && v.size);
+      // What arrived, so the app can explain an empty share.
+      const info = entries.map(([k, v]) => typeof v === 'string'
+        ? `${k}: text (${v.length} chars)` : `${k}: file ${v.type || 'no type'}, ${v.size} bytes`).join('; ');
       const cache = await caches.open(SHARED);
+      await cache.put('shared-info', new Response(info || 'no fields'));
       await cache.put('shared-text', new Response(text));
       if (image && image.size) {
         await cache.put('shared-image', new Response(image, { headers: { 'Content-Type': image.type } }));
